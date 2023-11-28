@@ -1,78 +1,110 @@
 /*
-  Autor: Embarcados
+      Programa para Leitura do sensor de Aceleração e Giroscópio MPU-6050
+      Leitura feita via baramento I2C, impressão na Serial para ser vizualizada com o Serial Plotter do Arduino IDE
+
+      Componentes:
+        - Arduino (Qualquer placa);
+        - Sensor MPU-6050 (Placa GY-521)
+
+      Versão 1.0 - Versão inicial com leitura do sensor e impressão na serial - 07/Jan/2021
+
+ *    * Criado por Cleber Borges - FunBots - @cleber.funbots  *     *
+
+      Instagram: https://www.instagram.com/cleber.funbots/
+      Facebook: https://www.facebook.com/cleber.funbots
+      YouTube: https://www.youtube.com/channel/UCKs2l5weIqgJQxiLj0A6Atw
+      Telegram: https://t.me/cleberfunbots
+
 */
 
-// Inclui a biblioteca para configurar o barramento I2C
-#include <Wire.h>
+// Inclusão das Bibliotecas
+#include<Wire.h>
 
-// Inclui bibliotecas para habilitar os métodos
-#include <Adafruit_MPU6050.h>
-#include <Adafruit_Sensor.h>
+// Endereco I2C do sensor MPU-6050
+const int MPU = 0x68;
 
-// Declaração do objeto
-Adafruit_MPU6050 mpu;
+// Variaveis para armazenar valores do sensor
+float AccX, AccY, AccZ, Temp, GyrX, GyrY, GyrZ;
 
-// Estrutura para receber as leituras dos sensores
-sensors_event_t acc, gyr, temp;
+void setup() {
+  // Inicializa Serial
+  Serial.begin(9600);
 
-void setup()
-{
-  // Inicializa a comunicação serial
-  Serial.begin(115200);
-  Serial.println("Iniciando demo MPU6050...");
+  // Inicializa o MPU-6050
+  Wire.begin();
+  Wire.beginTransmission(MPU);
+  Wire.write(0x6B);
+  Wire.write(0);
+  Wire.endTransmission(true);
 
-  // Inicializa o módulo MPU6050 e verifica se foi configurado corretamente
-  if (!mpu.begin())
-  {
-	// Caso não seja configurado corretamente, informa no monitor serial
-	Serial.println("Falha ao configurar MPU6050");
-  }
+  // Configura Giroscópio para fundo de escala desejado
+  /*
+    Wire.write(0b00000000); // fundo de escala em +/-250°/s
+    Wire.write(0b00001000); // fundo de escala em +/-500°/s
+    Wire.write(0b00010000); // fundo de escala em +/-1000°/s
+    Wire.write(0b00011000); // fundo de escala em +/-2000°/s
+  */
+  Wire.beginTransmission(MPU);
+  Wire.write(0x1B);
+  Wire.write(0x00011000);  // Trocar esse comando para fundo de escala desejado conforme acima
+  Wire.endTransmission();
 
-  Serial.println("MPU6050 encontrado");
+  // Configura Acelerometro para fundo de escala desejado
+  /*
+      Wire.write(0b00000000); // fundo de escala em +/-2g
+      Wire.write(0b00001000); // fundo de escala em +/-4g
+      Wire.write(0b00010000); // fundo de escala em +/-8g
+      Wire.write(0b00011000); // fundo de escala em +/-16g
+  */
+  Wire.beginTransmission(MPU);
+  Wire.write(0x1C);
+  Wire.write(0b00011000);  // Trocar esse comando para fundo de escala desejado conforme acima
+  Wire.endTransmission();
 }
 
-void loop()
-{
-  // Realiza as leituras do acelerômetro, giroscópio e do sensor de temperatura.
-  mpu.getEvent(&acc, &gyr, &temp);
+void loop() {
+  // Comandos para iniciar transmissão de dados
+  Wire.beginTransmission(MPU);
+  Wire.write(0x3B);
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU, 14, true); // Solicita os dados ao sensor
 
-  // Mostra na tela as leituras realizadas no Monitor Serial
-  Serial.println(" # Acelerômetro: ");
-  Serial.print("  X: ");
-  Serial.print(acc.acceleration.x);
-  Serial.print("\t Y: ");
-  Serial.print(acc.acceleration.y);
-  Serial.print("\t Z: ");
-  Serial.println(acc.acceleration.z);
+  // Armazena o valor dos sensores nas variaveis correspondentes
+  AccX = Wire.read() << 8 | Wire.read(); //0x3B (ACCEL_XOUT_H) & 0x3C (ACCEL_XOUT_L)
+  AccY = Wire.read() << 8 | Wire.read(); //0x3D (ACCEL_YOUT_H) & 0x3E (ACCEL_YOUT_L)
+  AccZ = Wire.read() << 8 | Wire.read(); //0x3F (ACCEL_ZOUT_H) & 0x40 (ACCEL_ZOUT_L)
+  Temp = Wire.read() << 8 | Wire.read(); //0x41 (TEMP_OUT_H) & 0x42 (TEMP_OUT_L)
+  GyrX = Wire.read() << 8 | Wire.read(); //0x43 (GYRO_XOUT_H) & 0x44 (GYRO_XOUT_L)
+  GyrY = Wire.read() << 8 | Wire.read(); //0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
+  GyrZ = Wire.read() << 8 | Wire.read(); //0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
 
-  Serial.println(" # Giroscópio: ");
-  Serial.print("  X: ");
-  Serial.print(gyr.gyro.x);
-  Serial.print("\t Y: ");
-  Serial.print(gyr.gyro.y);
-  Serial.print("\t Z: ");
-  Serial.println(gyr.gyro.z);
-  Serial.println("--------------------");
+  // Imprime na Serial os valores obtidos
+  /* Alterar divisão conforme fundo de escala escolhido:
+      Acelerômetro
+      +/-2g = 16384
+      +/-4g = 8192
+      +/-8g = 4096
+      +/-16g = 2048
 
-  // Mostra as leituras realizadas no Plotter Serial
-
-  // Descomente para mostrar as leituras individuais do acelerômetro no Plotter Serial
-  /*
-  Serial.print(acc.acceleration.x);
-  Serial.print("\t");
-  Serial.print(acc.acceleration.y);
-  Serial.print("\t");
-  Serial.println(acc.acceleration.z);
+      Giroscópio
+      +/-250°/s = 131
+      +/-500°/s = 65.6
+      +/-1000°/s = 32.8
+      +/-2000°/s = 16.4
   */
+/*
+  Serial.print(AccX / 2048);
+  Serial.print(" ");
+  Serial.print(AccY / 2048);
+  Serial.print(" ");
+  Serial.println(AccZ / 2048);
+*/
+  Serial.print(GyrX / 16.4);
+  Serial.print(" ");
+  Serial.print(GyrY / 16.4);
+  Serial.print(" ");
+  Serial.println(GyrZ / 16.4);
 
-  // Descomente para mostrar as leituras individuais do giroscópio no Plotter Serial
-  /*
-  Serial.print(gyr.gyro.x);
-  Serial.print("\t");
-  Serial.print(gyr.gyro.y);
-  Serial.print("\t");
-  Serial.println(gyr.gyro.z);
-  */
-
-  delay(50);
+  // Atraso de 100ms
+  delay(100);
 }
