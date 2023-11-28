@@ -1,27 +1,13 @@
-/*
-      Programa para Leitura do sensor de Aceleração e Giroscópio MPU-6050
-      Leitura feita via baramento I2C, impressão na Serial para ser vizualizada com o Serial Plotter do Arduino IDE
-
-      Componentes:
-        - Arduino (Qualquer placa);
-        - Sensor MPU-6050 (Placa GY-521)
-
-      Versão 1.0 - Versão inicial com leitura do sensor e impressão na serial - 07/Jan/2021
-
- *    * Criado por Cleber Borges - FunBots - @cleber.funbots  *     *
-
-      Instagram: https://www.instagram.com/cleber.funbots/
-      Facebook: https://www.facebook.com/cleber.funbots
-      YouTube: https://www.youtube.com/channel/UCKs2l5weIqgJQxiLj0A6Atw
-      Telegram: https://t.me/cleberfunbots
-
-*/
-
-// Inclusão das Bibliotecas
 #include<Wire.h>
 
 // Endereco I2C do sensor MPU-6050
 const int MPU = 0x68;
+
+// Salvamento das leituras para calibração
+int leituras_pos[100];
+int leituras_neg[100];
+
+float ganho;
 
 // Variaveis para armazenar valores do sensor
 float AccX, AccY, AccZ, Temp, GyrX, GyrY, GyrZ;
@@ -62,6 +48,41 @@ void setup() {
   Wire.endTransmission();
 }
 
+
+void adicionarLeitura(int novaLeitura, char signal) {
+  // Desloca todas as leituras para a direita para abrir espaço para a nova leitura
+  if signal == 'p'{
+    // Adiciona leituras positivas
+    for (int i = 10 - 1; i > 0; i--) {
+      leituras_pos[i] = leituras_pos[i - 1];
+    }
+
+  // Adiciona a nova leitura à primeira posição da lista
+  leituras_pos[0] = novaLeitura;
+  }else{
+    // Adiciona leituras negativas
+    for (int i = 10 - 1; i > 0; i--) {
+      leituras_neg[i] = leituras_neg[i - 1];
+    }
+
+  // Adiciona a nova leitura à primeira posição da lista
+  leituras_neg[0] = novaLeitura;
+  }
+}
+
+float media(int leituras[100]){
+  /*
+    Função que calcula a média das amostras
+  */
+  int total = 0;
+  int media = 0;
+  for(int i = 0; i<100; i ++){
+    total = media + leituras[i]
+  }
+    media = total/100;
+  return media
+}
+
 void loop() {
   // Comandos para iniciar transmissão de dados
   Wire.beginTransmission(MPU);
@@ -78,6 +99,7 @@ void loop() {
   GyrY = Wire.read() << 8 | Wire.read(); //0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
   GyrZ = Wire.read() << 8 | Wire.read(); //0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
 
+  adicionarLeitura(GyrX);
   // Imprime na Serial os valores obtidos
   /* Alterar divisão conforme fundo de escala escolhido:
       Acelerômetro
@@ -106,5 +128,9 @@ void loop() {
   Serial.println(GyrZ / 16.4);
 
   // Atraso de 100ms
-  delay(100);
+  delay(5000);
+  cont = cont + 1;
+  }
 }
+
+
