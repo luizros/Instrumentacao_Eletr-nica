@@ -103,7 +103,6 @@ void loop() {
   adicionarLeituraX(AccX, (AccX >= 0) ? 'p' : 'n');
   adicionarLeituraY(AccY, (AccY >= 0) ? 'p' : 'n');
   adicionarLeituraZ(AccZ, (AccZ >= 0) ? 'p' : 'n');
-  Serial.println(AccX);
 
   cont++;
 
@@ -116,12 +115,22 @@ void loop() {
     float media_neg_y = calcularMedia(leituras_neg_y);
     float media_pos_z = calcularMedia(leituras_pos_z);
     float media_neg_z = calcularMedia(leituras_neg_z);
-    Serial.print("Media: ");
+    Serial.print("Media x pos: ");
+    Serial.println(media_pos_x);
+    Serial.print("Media x neg: ");
     Serial.println(media_neg_x);
-
+    Serial.print("Media y pos: ");
+    Serial.println(media_pos_y);
+    Serial.print("Media y neg: ");
+    Serial.println(media_neg_y);
+    Serial.print("Media z pos: ");
+    Serial.println(media_pos_z);
+    Serial.print("Media z neg: ");
+    Serial.println(media_neg_z);
+    Serial.print("-------------------------------------------\n");
     cont = 0;
     delay(10000);
   }
 
-  delay(50); 
+  delay(50); // Atraso para evitar leituras muito rápidas
 }
