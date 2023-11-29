@@ -107,7 +107,6 @@ void loop() {
     plota();
   }
   
-
 /*
   Serial.print(GyrX / 131);
   Serial.print(" ");
