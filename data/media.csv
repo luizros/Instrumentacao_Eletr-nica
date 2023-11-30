@@ -1,2 +1,2 @@
-﻿x pos:x neg:y pos:y neg:z pos:z neg
-1,01:-0,95:1,00:-1,00:1,04:-0,96
+,x pos,x neg,y pos,y neg,z pos,z neg
+0,1.01,-0.95,1.0,-1.0,1.04,-0.96
