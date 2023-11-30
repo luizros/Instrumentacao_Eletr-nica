@@ -1,4 +1,12 @@
-#include<Wire.h>
+#include <Wire.h>
+
+// Valores obtidos para compensação
+#define GANHO_X  1.0
+#define OFFSET_X  0.030000000000000027
+#define GANHO_Y  1.0
+#define OFFSET_Y  0.0
+#define GANHO_Z  1.0
+#define OFFSET_Z  0.040000000000000036
 
 // Endereco I2C do sensor MPU-6050
 const int MPU = 0x68;
@@ -6,17 +14,45 @@ const int MPU = 0x68;
 // Variaveis para armazenar valores do sensor
 float AccX, AccY, AccZ, Temp, GyrX, GyrY, GyrZ;
 
-float aceleracao[100];
+// variaveis para salvar os valores de aceleração dos eixos
+float aceleracao[100]; // Talvez seja melhor mudar para um array de 3 dimensões para armazenar todos os eixos
+
+// contador para controlar qtd. de iterações
 int cont = 0;
 
-void plota(){
+// Função para calibrar os dados
+void calibrar(float& valor, float ganho, float offset) {
+  valor = 1 * valor - offset;
+}
+
+void plota(bool setCalibration) {
+  // Se setCalibration == true faz a calibração, se false, não faz a calibração
+  // Calibração : A_saida = GANHO_EIXO * aceleração i +- offset_EIXO(O OFFSSET depende se a saida for negativa OU POSITIVA)
+
   Serial.print("Vou plotar os dados\n\n");
-  for(int i = 0; i<100; i++){
+  for (int i = 0; i < 100; i++) {
     Serial.println(aceleracao[i]);
+    if (i % 20 == 0){
+      Serial.print("Printei 25 amostras n calibradas");
+    }
+  }
+  Serial.print("Terminei de plotar amostras n calibradas\n\n");
+  Serial.print("Vou plotar imprimir as amostras calibradas\n\n");
+
+  for (int i = 0; i < 100; i++) {
+    if (setCalibration) {
+      // Aplica calibração se necessário
+      calibrar(aceleracao[i], GANHO_X, OFFSET_X);
+    }
+    Serial.println(aceleracao[i]);
+    if (i % 20 == 0){
+      Serial.print("Printei 25 amostras calibradas");
+    }
   }
   Serial.print("Terminei de plotar\n\n");
   delay(100000);
 }
+
 
 void setup() {
   // Inicializa Serial
@@ -55,7 +91,6 @@ void setup() {
   Serial.print("Preparando para coletar as 100 amostras\n");
   delay(10000);
 }
-
 void loop() {
   // Comandos para iniciar transmissão de dados
   Wire.beginTransmission(MPU);
@@ -87,35 +122,26 @@ void loop() {
       +/-2000°/s = 16.4
   */
 
-  Serial.print(AccX / 2048);
+  Serial.print((AccX / 2048));
   Serial.print(" ");
   Serial.print(AccY / 2048);
   Serial.print(" ");
   Serial.println(AccZ / 2048);
 
-
-  // Salva as 100 amostras positivas em +- 1g
-  // Para trocar o eixo basta mudo Acc<eixo> para 'x', 'y' ou 'z'
-  if ((AccX / 2048) >= 0 && (cont < 100)){
+  // Salva as 100 amostras positivas ou negativas em +- 1g
+  // Para trocar o eixo basta mudar Acc<eixo> para 'x', 'y' ou 'z'
+  if ((AccX / 2048) <= 0 && (cont < 100)) {
     Serial.print("Entrei no if, estou coletando dados\n\n");
-    aceleracao[cont] = AccX/2048;
+    aceleracao[cont] = AccX / 2048;
     cont += 1;
   }
-  if (cont == 100){
+
+  if (cont == 100) {
     cont = 0;
     Serial.print("Entrei no plot\n");
-    plota();
+    plota(true); // Define como true para calibrar os dados ao plotar
   }
-  
-/*
-  Serial.print(GyrX / 131);
-  Serial.print(" ");
-  Serial.print(GyrY / 131);
-  Serial.print(" ");
-  Serial.println(GyrZ / 131);
-*/
 
-
- // Atraso de 100ms
+  // Atraso de 100ms
   delay(100);
 }
