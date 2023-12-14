@@ -6,7 +6,7 @@ double AcX, AcY, AcZ;
 float Pitch, Roll;
 
 const int numMedicoes = 100;
-float pitchArray[numMedicoes];
+float rollchArray[numMedicoes];
 
 void setup() {
   Serial.begin(9600);
@@ -23,26 +23,26 @@ void loop() {
 
   // Armazena as medidas do Pitch no array
   if (contMedicoes < numMedicoes) {
-    pitchArray[contMedicoes] = Pitch;
+    rollchArray[contMedicoes] = Roll;
     contMedicoes++;
   } else {
     // Exibe e reinicia o array quando coleta 100 medidas
     Serial.println("Medidas do Pitch:");
     for (int i = 0; i < numMedicoes; i++) {
-      Serial.print(pitchArray[i]);
+      Serial.print(rollchArray[i]);
       Serial.print(", \t");
     }
     Serial.println();
     Serial.println("Fim das medidas");
-    delay(100000);
+    delay(5000);
 
     // Reinicia as variáveis para a próxima iteração
     contMedicoes = 0;
-    memset(pitchArray, 0, sizeof(pitchArray));
+    memset(rollchArray, 0, sizeof(rollchArray));
   }
 
   // Exibe os resultados no monitor serial
-  Serial.print("Pitch: ");
+  Serial.print("Roll: ");
   Serial.print(Pitch);
   Serial.print("\n");
   delay(100);  // Atraso entre medições
